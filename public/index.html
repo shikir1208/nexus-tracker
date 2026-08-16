@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Tracking Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0c10;
+      --panel-bg: rgba(31, 40, 51, 0.85);
+      --accent: #66fcf1;
+      --accent-dim: #45a29e;
+      --text: #c5c6c7;
+      --text-bright: #ffffff;
+    }
+    
+    body, html { 
+      margin: 0; 
+      padding: 0; 
+      width: 100%; 
+      height: 100%;
+      font-family: 'Inter', sans-serif; 
+      background: var(--bg-color); 
+      color: var(--text); 
+      overflow: hidden;
+    }
+
+    #map { 
+      height: 100vh; 
+      width: 100vw; 
+      z-index: 1;
+    }
+
+    #overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(102, 252, 241, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    
+    .panel:hover {
+      border-color: rgba(102, 252, 241, 0.5);
+      transform: translateY(-2px);
+    }
+
+    h2 {
+      margin: 0 0 5px 0;
+      font-weight: 700;
+      font-size: 22px;
+      color: var(--text-bright);
+      letter-spacing: -0.5px;
+    }
+    
+    .subtitle {
+      font-size: 13px;
+      color: var(--accent-dim);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .status-badge { 
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px; 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      background: rgba(44, 44, 46, 0.5); 
+      color: #ff9500; 
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .status-badge.active {
+      background: rgba(102, 252, 241, 0.15);
+      color: var(--accent);
+      box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff9500;
+    }
+    
+    .status-badge.active .pulse {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulsate 1.5s infinite;
+    }
+
+    @keyframes pulsate {
+      0% { transform: scale(0.95); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.5; }
+      100% { transform: scale(0.95); opacity: 1; }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .info-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .info-label {
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .info-val {
+      color: var(--text-bright);
+      font-weight: 600;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    /* Custom Map Marker */
+    .custom-div-icon {
+      background: transparent;
+      border: none;
+    }
+    
+    .marker-pin {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid #fff;
+      box-shadow: 0 0 15px var(--accent);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    .marker-ring {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: pulsate-ring 2s infinite ease-out;
+    }
+
+    @keyframes pulsate-ring {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    }
+    
+    .leaflet-popup-content-wrapper {
+      background: var(--panel-bg);
+      color: var(--text-bright);
+      border: 1px solid rgba(102, 252, 241, 0.3);
+      backdrop-filter: blur(8px);
+      border-radius: 8px;
+    }
+    
+    .leaflet-popup-tip {
+      background: var(--panel-bg);
+    }
+    
+    .leaflet-container a.leaflet-popup-close-button {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+  
+  <div id="overlay">
+    <div class="panel">
+      <h2>Live Telemetry</h2>
+      <div class="subtitle">Real-time Location Tracking</div>
+      
+      <div id="status" class="status-badge">
+        <div class="pulse"></div>
+        <span id="status-text">Awaiting connection...</span>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Device ID</span>
+          <span class="info-val" id="val-device">--</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Latitude</span>
+          <span class="info-val" id="val-lat">--</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Longitude</span>
+          <span class="info-val" id="val-lng">--</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Last Updated</span>
+          <span class="info-val" id="val-time">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Initialize map with Dark Matter tileset
+    const map = L.map('map', {
+      zoomControl: false
+    }).setView([33.3152, 44.3661], 13);
+    
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(map);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
+    }).addTo(map);
+
+    // Custom animated marker
+    const customIcon = L.divIcon({
+      className: 'custom-div-icon',
+      html: "<div class='marker-ring'></div><div class='marker-pin'></div>",
+      iconSize: [48, 48],
+      iconAnchor: [24, 24]
+    });
+
+    let marker;
+
+    const socket = io();
+
+    socket.on('connect', () => {
+      document.getElementById('status-text').innerText = 'Connected, awaiting data...';
+    });
+
+    socket.on('disconnect', () => {
+      const statusDiv = document.getElementById('status');
+      statusDiv.classList.remove('active');
+      document.getElementById('status-text').innerText = 'Disconnected from server';
+    });
+
+    socket.on('locationUpdate', (data) => {
+      if (data.timestamp && (data.lat !== 0 || data.lng !== 0)) {
+        // Update UI
+        const statusDiv = document.getElementById('status');
+        statusDiv.classList.add('active');
+        document.getElementById('status-text').innerText = `EVENT: ${data.event}`;
+        
+        document.getElementById('val-device').innerText = data.device_id || 'Unknown';
+        document.getElementById('val-lat').innerText = data.lat.toFixed(6);
+        document.getElementById('val-lng').innerText = data.lng.toFixed(6);
+        document.getElementById('val-time').innerText = data.timestamp;
+
+        // Update Map
+        const pos = [data.lat, data.lng];
+        if (!marker) {
+          marker = L.marker(pos, { icon: customIcon }).addTo(map)
+            .bindPopup(`<b>Device:</b> ${data.device_id}<br><b>Event:</b> ${data.event}`);
+        } else {
+          marker.setLatLng(pos);
+          marker.getPopup().setContent(`<b>Device:</b> ${data.device_id}<br><b>Event:</b> ${data.event}`);
+        }
+        
+        // Smoothly pan to new location
+        map.flyTo(pos, 16, {
+          animate: true,
+          duration: 1.5
+        });
+      }
+    });
+  </script>
+</body>
+</html>
