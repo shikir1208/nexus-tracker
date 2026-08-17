@@ -20,7 +20,7 @@
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand-logo">
-        <div class="brand-mark">N</div>
+        <img class="brand-mark" src="/assets/nuhra-mark.svg" alt="Nuhra">
         <div>
           <span>Nuhra</span>
           <span class="brand-tagline">Care Intelligence</span>
@@ -111,6 +111,24 @@
         <div class="form-group">
           <label for="patient-age">Age (optional)</label>
           <input id="patient-age" type="number" min="0" max="130">
+        </div>
+        <div class="form-group">
+          <label for="patient-gender">Gender (optional)</label>
+          <select id="patient-gender">
+            <option value="">Not specified</option>
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Non-binary">Non-binary</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="patient-disease">Diagnosis / condition (optional)</label>
+          <input id="patient-disease" placeholder="e.g. Diabetes">
+        </div>
+        <div class="form-group">
+          <label for="patient-allergies">Allergies (optional)</label>
+          <textarea id="patient-allergies" rows="2" placeholder="e.g. Penicillin, peanuts"></textarea>
         </div>
         <div class="form-group">
           <label for="patient-notes">Notes (optional)</label>

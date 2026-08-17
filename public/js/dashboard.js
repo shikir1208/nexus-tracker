@@ -90,7 +90,7 @@ function upsertMarker(location) {
   }
 }
 
-function updateLatestPanel(location) {
+function updateLatestPanel(location, flyToLocation = true) {
   const banner = document.getElementById('alert-banner');
   banner.textContent = location.patient
     ? `Alert from ${location.patient.name}`
@@ -104,13 +104,15 @@ function updateLatestPanel(location) {
   document.getElementById('val-lng').textContent = location.lng.toFixed(6);
   document.getElementById('val-time').textContent = location.timestamp;
 
-  map.flyTo([location.lat, location.lng], 16, { animate: true, duration: 1.2 });
+  if (flyToLocation) {
+    map.flyTo([location.lat, location.lng], 16, { animate: true, duration: 1.2 });
+  }
 }
 
 function handleLocations(locations, updatePanel = false) {
   locations.forEach(upsertMarker);
   if (updatePanel && locations.length > 0) {
-    updateLatestPanel(locations[locations.length - 1]);
+    updateLatestPanel(locations[locations.length - 1], false);
   }
 }
 
@@ -177,6 +179,9 @@ function renderPatients() {
         </div>
         <div class="patient-meta">
           <div><span>Age</span><span>${patient.age ?? '—'}</span></div>
+          <div><span>Gender</span><span>${escapeHtml(patient.gender || '—')}</span></div>
+          <div><span>Condition</span><span>${escapeHtml(patient.disease || '—')}</span></div>
+          <div><span>Allergies</span><span>${escapeHtml(patient.allergies || 'None recorded')}</span></div>
           <div><span>Last location</span><span>${locationText}</span></div>
           <div><span>Notes</span><span>${escapeHtml(patient.notes || '—')}</span></div>
         </div>
@@ -224,6 +229,9 @@ function openPatientModal(patientId = null) {
     document.getElementById('patient-name').value = patient.name;
     document.getElementById('patient-watch').value = patient.watchId;
     document.getElementById('patient-age').value = patient.age ?? '';
+    document.getElementById('patient-gender').value = patient.gender || '';
+    document.getElementById('patient-disease').value = patient.disease || '';
+    document.getElementById('patient-allergies').value = patient.allergies || '';
     document.getElementById('patient-notes').value = patient.notes || '';
   } else {
     document.getElementById('modal-title').textContent = 'Add Patient';
@@ -247,6 +255,9 @@ async function savePatient(event) {
     name: document.getElementById('patient-name').value.trim(),
     watchId: document.getElementById('patient-watch').value.trim(),
     age: document.getElementById('patient-age').value,
+    gender: document.getElementById('patient-gender').value,
+    disease: document.getElementById('patient-disease').value.trim(),
+    allergies: document.getElementById('patient-allergies').value.trim(),
     notes: document.getElementById('patient-notes').value.trim()
   };
 
@@ -291,7 +302,7 @@ function initSocket() {
     window.location.href = '/login.html';
   });
 
-  socket.on('locationsSnapshot', handleLocations);
+  socket.on('locationsSnapshot', (locations) => handleLocations(locations, true));
 
   socket.on('locationUpdate', (location) => {
     upsertMarker(location);
@@ -347,7 +358,7 @@ async function boot() {
   await loadPatients();
 
   const existing = await api('/api/location');
-  handleLocations(existing, false);
+  handleLocations(existing, true);
 }
 
 boot();

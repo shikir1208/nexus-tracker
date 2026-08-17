@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">Nuhra light mark</title>
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 7.5v4.25M12.34 12.34l3 3M7.5 24h4.25M35.75 24H40.5M35.66 12.34l-3 3" stroke-width="2.3"/>
+    <path d="M12 33.5c3.5-3.85 7.5-5.78 12-5.78s8.5 1.93 12 5.78" stroke-width="2.25"/>
+    <path d="M16.25 26.7a8.15 8.15 0 1 1 15.5 0" stroke-width="2.6"/>
+    <path d="M18.2 31.85h11.6" stroke-width="2.6"/>
+  </g>
+</svg>

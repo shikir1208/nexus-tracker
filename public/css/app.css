@@ -189,24 +189,14 @@ a {
 .brand-mark {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #fff;
-  background: var(--accent-gradient);
-  box-shadow: 0 8px 24px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  position: relative;
-  overflow: hidden;
+  display: block;
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.12));
 }
 
-.brand-mark::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 55%);
+[data-ui-theme="dark"] .brand-mark {
+  filter: invert(1) drop-shadow(0 5px 10px rgba(0, 0, 0, 0.18));
 }
+
 
 .brand-tagline {
   display: block;
@@ -849,6 +839,7 @@ a {
   color: var(--text-strong);
   font-weight: 500;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .patient-actions {
@@ -1031,7 +1022,7 @@ a {
 .login-body .ambient-bg { display: none; }
 .signin-shell { position: relative; z-index: 1; min-height: 100vh; width: min(100%, 1160px); margin: 0 auto; padding: 36px 56px 28px; display: grid; grid-template-rows: auto 1fr auto; }
 .signin-brand { display: inline-flex; align-items: center; gap: 10px; width: max-content; color: #1d1d1f; font-size: 17px; font-weight: 600; letter-spacing: -.03em; }
-.signin-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: white; font-size: 14px; background: linear-gradient(145deg, #1d1d1f, #44444a); box-shadow: 0 3px 8px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.28); }
+.signin-mark { width: 30px; height: 30px; display: block; color: #1d1d1f; filter: drop-shadow(0 2px 5px rgba(0,0,0,.1)); }
 .signin-content { width: min(100%, 360px); align-self: center; justify-self: center; transform: translateY(-18px); }
 .eyebrow { margin: 0 0 12px; color: #6e6e73; font-size: 11px; font-weight: 600; letter-spacing: .11em; }
 .signin-content h1 { margin: 0; color: #1d1d1f; font-size: clamp(32px, 4vw, 40px); font-weight: 600; letter-spacing: -.04em; line-height: 1.08; }

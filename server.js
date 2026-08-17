@@ -22,6 +22,7 @@ const CREDENTIALS = {
 };
 
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 const sessions = new Map();
@@ -156,7 +157,7 @@ app.get('/api/patients', requireAuth, (req, res) => {
 });
 
 app.post('/api/patients', requireAuth, (req, res) => {
-  const { name, watchId, age, notes } = req.body || {};
+  const { name, watchId, age, gender, disease, allergies, notes } = req.body || {};
   if (!name?.trim() || !watchId?.trim()) {
     return res.status(400).json({ error: 'Name and watch ID are required' });
   }
@@ -169,6 +170,9 @@ app.post('/api/patients', requireAuth, (req, res) => {
     name: name.trim(),
     watchId: watchId.trim(),
     age: age ? Number(age) : null,
+    gender: gender?.trim() || '',
+    disease: disease?.trim() || '',
+    allergies: allergies?.trim() || '',
     notes: notes?.trim() || '',
     createdAt: new Date().toISOString()
   };
@@ -182,7 +186,7 @@ app.put('/api/patients/:id', requireAuth, (req, res) => {
   const index = patients.findIndex((p) => p.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Patient not found' });
 
-  const { name, watchId, age, notes } = req.body || {};
+  const { name, watchId, age, gender, disease, allergies, notes } = req.body || {};
   if (!name?.trim() || !watchId?.trim()) {
     return res.status(400).json({ error: 'Name and watch ID are required' });
   }
@@ -195,6 +199,9 @@ app.put('/api/patients/:id', requireAuth, (req, res) => {
     name: name.trim(),
     watchId: watchId.trim(),
     age: age ? Number(age) : null,
+    gender: gender?.trim() || '',
+    disease: disease?.trim() || '',
+    allergies: allergies?.trim() || '',
     notes: notes?.trim() || ''
   };
 
@@ -211,8 +218,19 @@ app.delete('/api/patients/:id', requireAuth, (req, res) => {
 });
 
 app.post('/api/location', (req, res) => {
-  const { device_id, event, lat, lng } = req.body;
-  const deviceId = device_id || 'watch_01';
+  const payload = req.body || {};
+  const deviceId = String(payload.device_id || payload.deviceId || payload.watch_id || payload.watchId || 'watch_01').trim();
+  const event = payload.event || payload.type || payload.signal || 'LOCATION_UPDATE';
+  const lat = Number(payload.lat ?? payload.latitude);
+  const lng = Number(payload.lng ?? payload.lon ?? payload.longitude);
+
+  if (!deviceId || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return res.status(400).json({
+      error: 'A valid device ID, latitude, and longitude are required',
+      expected: 'device_id, lat (or latitude), lng (or longitude)'
+    });
+  }
+
   const location = enrichLocation(deviceId, { event, lat, lng });
   deviceLocations[deviceId] = location;
 
@@ -222,7 +240,7 @@ app.post('/api/location', (req, res) => {
   io.emit('locationUpdate', location);
   io.emit('locationsSnapshot', getLocationsSnapshot());
 
-  res.status(200).json({ status: 'success' });
+  res.status(200).json({ status: 'success', location });
 });
 
 app.get('/api/location', requireAuth, (req, res) => {
