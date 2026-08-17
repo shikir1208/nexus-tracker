@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" data-ui-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — Nuhra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="login-body">
+  <main class="signin-shell">
+    <a class="signin-brand" href="/login.html" aria-label="Nuhra home"><span class="signin-mark">N</span><span>Nuhra</span></a>
+    <section class="signin-content" aria-labelledby="signin-title">
+      <p class="eyebrow">SECURE ACCESS</p>
+      <h1 id="signin-title">Sign in to Nuhra</h1>
+      <p class="signin-intro">Your private care workspace.</p>
+      <form id="login-form" class="signin-form">
+        <div class="form-group"><label for="username">Username</label><input id="username" name="username" type="text" autocomplete="username" required autofocus></div>
+        <div class="form-group"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+        <p id="login-error" class="form-error" aria-live="polite"></p>
+        <button class="btn btn-primary" type="submit">Continue</button>
+      </form>
+    </section>
+    <p class="signin-footer">Nuhra Care Intelligence</p>
+  </main>
+  <script src="/js/login.js"></script>
+</body>
+</html>
