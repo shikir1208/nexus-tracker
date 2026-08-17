@@ -25,6 +25,7 @@ let markers = new Map();
 let patients = [];
 let editingPatientId = null;
 let socket;
+let toastTimer;
 
 const customIcon = L.divIcon({
   className: 'custom-div-icon',
@@ -77,8 +78,14 @@ function popupContent(location) {
   return `<b>${patientName}</b><br>Watch: ${location.device_id}<br>Event: ${location.event}`;
 }
 
+function hasValidCoordinates(location) {
+  const lat = Number(location.lat);
+  const lng = Number(location.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+}
+
 function upsertMarker(location) {
-  if (!location.timestamp || (location.lat === 0 && location.lng === 0)) return;
+  if (!location.timestamp || !hasValidCoordinates(location)) return;
   const pos = [location.lat, location.lng];
   let marker = markers.get(location.device_id);
   if (!marker) {
@@ -100,11 +107,12 @@ function updateLatestPanel(location, flyToLocation = true) {
   document.getElementById('val-patient').textContent = location.patient?.name || 'Not assigned';
   document.getElementById('val-device').textContent = location.device_id;
   document.getElementById('val-event').textContent = location.event;
-  document.getElementById('val-lat').textContent = location.lat.toFixed(6);
-  document.getElementById('val-lng').textContent = location.lng.toFixed(6);
+  const validCoordinates = hasValidCoordinates(location);
+  document.getElementById('val-lat').textContent = validCoordinates ? location.lat.toFixed(6) : 'GPS unavailable';
+  document.getElementById('val-lng').textContent = validCoordinates ? location.lng.toFixed(6) : 'GPS unavailable';
   document.getElementById('val-time').textContent = location.timestamp;
 
-  if (flyToLocation) {
+  if (flyToLocation && validCoordinates) {
     map.flyTo([location.lat, location.lng], 16, { animate: true, duration: 1.2 });
   }
 }
@@ -121,6 +129,47 @@ function setConnectionStatus(online, text) {
   const label = document.getElementById('connection-text');
   pill.classList.toggle('online', online);
   label.textContent = text;
+}
+
+function updateNotificationButton() {
+  const button = document.getElementById('notifications-btn');
+  if (!button) return;
+
+  if (!('Notification' in window)) {
+    button.hidden = true;
+  } else if (Notification.permission === 'granted') {
+    button.textContent = 'Alerts on';
+    button.classList.add('enabled');
+  } else if (Notification.permission === 'denied') {
+    button.textContent = 'Alerts blocked';
+    button.disabled = true;
+  }
+}
+
+function showLocationToast(location) {
+  const toast = document.getElementById('location-toast');
+  const name = location.patient?.name || 'Patient';
+  toast.innerHTML = `<strong>${escapeHtml(name)}</strong><span>Location received from ${escapeHtml(location.device_id)}</span>`;
+  toast.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('visible'), 5500);
+}
+
+function notifyPatientLocation(location) {
+  if (!location.patient) return;
+
+  showLocationToast(location);
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const coordinates = hasValidCoordinates(location)
+    ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`
+    : 'GPS position unavailable';
+  new Notification(`Nuhra · ${location.patient.name}`, {
+    body: `${location.event}\n${coordinates}`,
+    icon: '/assets/nuhra-mark.svg',
+    tag: `nuhra-location-${location.device_id}`,
+    renotify: true
+  });
 }
 
 function switchView(viewId) {
@@ -307,6 +356,7 @@ function initSocket() {
   socket.on('locationUpdate', (location) => {
     upsertMarker(location);
     updateLatestPanel(location);
+    notifyPatientLocation(location);
     loadPatients().catch(() => {});
   });
 }
@@ -327,6 +377,12 @@ function bindEvents() {
   document.getElementById('logout-btn').addEventListener('click', async () => {
     await api('/api/logout', { method: 'POST' });
     window.location.href = '/login.html';
+  });
+
+  document.getElementById('notifications-btn').addEventListener('click', async () => {
+    if (!('Notification' in window)) return;
+    await Notification.requestPermission();
+    updateNotificationButton();
   });
 
   document.getElementById('add-patient-btn').addEventListener('click', () => openPatientModal());
@@ -352,6 +408,7 @@ async function boot() {
   }
 
   applyUiTheme(getStored('nuhra-ui-theme', 'dark'));
+  updateNotificationButton();
   initMap();
   bindEvents();
   initSocket();

@@ -48,6 +48,7 @@
           <p id="page-subtitle">Real-time watch telemetry and patient locations</p>
         </div>
         <div class="topbar-actions">
+          <button class="notification-button" id="notifications-btn" type="button">Enable alerts</button>
           <div class="segmented" id="map-theme-toggle">
             <button type="button" data-map-theme="light">Light</button>
             <button type="button" data-map-theme="dark" class="active">Dark</button>
@@ -94,6 +95,8 @@
       </main>
     </div>
   </div>
+
+  <div class="location-toast" id="location-toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <div class="modal-backdrop" id="patient-modal">
     <div class="modal">
